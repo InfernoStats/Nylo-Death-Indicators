@@ -105,7 +105,7 @@ public class NyloDeathIndicatorsPlugin extends Plugin
 		ItemID.DINHS_BULWARK
 	));
 
-	private static final int BARRAGE_ANIMATION = 1979;
+	private static final int BARRAGE_ANIMATION = 10092;
 	private static final int DRAGON_FIRE_SHIELD_ANIMATION = 6696;
 	private static final int NYLOCAS_REGION_ID = 13122;
 
