@@ -12,21 +12,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import net.runelite.api.Actor;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.GraphicID;
-import net.runelite.api.GraphicsObject;
-import net.runelite.api.HitsplatID;
-import net.runelite.api.ItemID;
-import net.runelite.api.NPC;
-import net.runelite.api.NpcID;
-import net.runelite.api.Player;
-import net.runelite.api.PlayerComposition;
-import net.runelite.api.Renderable;
-import net.runelite.api.Skill;
-import net.runelite.api.VarPlayer;
-import net.runelite.api.Varbits;
+
+import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.FakeXpDrop;
 import net.runelite.api.events.GameTick;
@@ -34,6 +21,10 @@ import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.StatChanged;
+import net.runelite.api.gameval.*;
+import net.runelite.api.gameval.AnimationID;
+import net.runelite.api.gameval.ItemID;
+import net.runelite.api.gameval.NpcID;
 import net.runelite.api.kit.KitType;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.callback.Hooks;
@@ -60,53 +51,53 @@ public class NyloDeathIndicatorsPlugin extends Plugin
 	private final Map<Skill, Integer> previousXpMap = new EnumMap<>(Skill.class);
 
 	private static final Set<Integer> CHINCHOMPAS = new HashSet<>(Arrays.asList(
-		ItemID.CHINCHOMPA_10033,
-		ItemID.RED_CHINCHOMPA_10034,
-		ItemID.BLACK_CHINCHOMPA
+      ItemID.CHINCHOMPA_CAPTURED,
+      ItemID.CHINCHOMPA_BIG_CAPTURED,
+      ItemID.CHINCHOMPA_BLACK
 	));
 
 	private static final Set<Integer> POWERED_STAVES = new HashSet<>(Arrays.asList(
-		ItemID.SANGUINESTI_STAFF,
-		ItemID.TRIDENT_OF_THE_SEAS_FULL,
-		ItemID.TRIDENT_OF_THE_SEAS,
-		ItemID.TRIDENT_OF_THE_SWAMP,
-		ItemID.TRIDENT_OF_THE_SWAMP_E,
-		ItemID.HOLY_SANGUINESTI_STAFF,
-		ItemID.ACCURSED_SCEPTRE,
-		ItemID.WARPED_SCEPTRE,
-		ItemID.TUMEKENS_SHADOW,
-		ItemID.CORRUPTED_TUMEKENS_SHADOW
+      ItemID.SANGUINESTI_STAFF,
+      ItemID.TOTS,
+      ItemID.TOTS_CHARGED,
+      ItemID.TOXIC_TOTS_CHARGED,
+      ItemID.TOXIC_TOTS_I_CHARGED,
+      ItemID.SANGUINESTI_STAFF_OR,
+      ItemID.WILD_CAVE_ACCURSED_CHARGED,
+      ItemID.WARPED_SCEPTRE,
+      ItemID.TUMEKENS_SHADOW,
+      ItemID.DEADMAN_BLIGHTED_TUMEKENS_SHADOW
 	));
 
 	private static final Set<Integer> NYLO_MELEE_WEAPONS = new HashSet<>(Arrays.asList(
-		ItemID.SWIFT_BLADE, ItemID.HAM_JOINT, ItemID.GOBLIN_PAINT_CANNON,
-		ItemID.DRAGON_CLAWS, ItemID.DRAGON_SCIMITAR,
-		ItemID.ABYSSAL_BLUDGEON, ItemID.INQUISITORS_MACE,
-		ItemID.SARADOMIN_SWORD, ItemID.SARADOMINS_BLESSED_SWORD,
-		ItemID.GHRAZI_RAPIER, ItemID.HOLY_GHRAZI_RAPIER,
-		ItemID.ABYSSAL_WHIP, ItemID.ABYSSAL_WHIP_OR,
-		ItemID.FROZEN_ABYSSAL_WHIP, ItemID.VOLCANIC_ABYSSAL_WHIP,
-		ItemID.ABYSSAL_TENTACLE, ItemID.ABYSSAL_TENTACLE_OR,
-		ItemID.BLADE_OF_SAELDOR, ItemID.BLADE_OF_SAELDOR_C,
-		ItemID.BLADE_OF_SAELDOR_C_24553, ItemID.BLADE_OF_SAELDOR_C_25870,
-		ItemID.BLADE_OF_SAELDOR_C_25872, ItemID.BLADE_OF_SAELDOR_C_25874,
-		ItemID.BLADE_OF_SAELDOR_C_25876, ItemID.BLADE_OF_SAELDOR_C_25878,
-		ItemID.BLADE_OF_SAELDOR_C_25880, ItemID.BLADE_OF_SAELDOR_C_25882,
-		ItemID.DRAGON_CLAWS_CR, ItemID.CORRUPTED_DRAGON_CLAWS, ItemID.VOIDWAKER,
-		ItemID.DUAL_MACUAHUITL, ItemID.ELDER_MAUL,
-		ItemID.SULPHUR_BLADES, ItemID.GLACIAL_TEMOTLI
+      ItemID.SWIFT_BLADE, ItemID.JOINT_OF_HAM, ItemID.GOBLIN_RPG,
+      ItemID.DRAGON_CLAWS, ItemID.DRAGON_SCIMITAR,
+      ItemID.ABYSSAL_BLUDGEON, ItemID.INQUISITORS_MACE,
+      ItemID.SARADOMIN_SWORD, ItemID.BLESSED_SARADOMIN_SWORD_DEGRADED,
+      ItemID.GHRAZI_RAPIER, ItemID.GHRAZI_RAPIER_OR,
+      ItemID.ABYSSAL_WHIP, ItemID.LEAGUE_3_WHIP,
+      ItemID.ABYSSAL_WHIP_ICE, ItemID.ABYSSAL_WHIP_LAVA,
+      ItemID.ABYSSAL_TENTACLE, ItemID.LEAGUE_3_WHIP_TENTACLE,
+      ItemID.BLADE_OF_SAELDOR, ItemID.BLADE_OF_SAELDOR_INFINITE,
+      ItemID.BLADE_OF_SAELDOR_INFINITE_DUMMY, ItemID.BLADE_OF_SAELDOR_INFINITE_ITHELL,
+      ItemID.BLADE_OF_SAELDOR_INFINITE_IORWERTH, ItemID.BLADE_OF_SAELDOR_INFINITE_TRAHAEARN,
+      ItemID.BLADE_OF_SAELDOR_INFINITE_CADARN, ItemID.BLADE_OF_SAELDOR_INFINITE_CRWYS,
+      ItemID.BLADE_OF_SAELDOR_INFINITE_MEILYR, ItemID.BLADE_OF_SAELDOR_INFINITE_AMLODD,
+      ItemID.BH_DRAGON_CLAWS_CORRUPTED, ItemID.DEADMAN_BLIGHTED_DRAGON_CLAWS, ItemID.VOIDWAKER,
+      ItemID.DUAL_MACUAHUITL, ItemID.ELDER_MAUL,
+      ItemID.SULPHUR_BLADES, ItemID.GLACIAL_TEMOTLI
 	));
 
 	private static final Set<Integer> MULTIKILL_MELEE_WEAPONS = new HashSet<>(Arrays.asList(
-		ItemID.SCYTHE_OF_VITUR_UNCHARGED, ItemID.SCYTHE_OF_VITUR,
-		ItemID.HOLY_SCYTHE_OF_VITUR_UNCHARGED, ItemID.HOLY_SCYTHE_OF_VITUR,
-		ItemID.SANGUINE_SCYTHE_OF_VITUR_UNCHARGED, ItemID.SANGUINE_SCYTHE_OF_VITUR,
-		ItemID.CORRUPTED_SCYTHE_OF_VITUR, ItemID.CORRUPTED_SCYTHE_OF_VITUR_UNCHARGED,
-		ItemID.DINHS_BULWARK
+      ItemID.SCYTHE_OF_VITUR_UNCHARGED, ItemID.SCYTHE_OF_VITUR,
+      ItemID.SCYTHE_OF_VITUR_UNCHARGED_OR, ItemID.SCYTHE_OF_VITUR_OR,
+      ItemID.SCYTHE_OF_VITUR_UNCHARGED_BL, ItemID.SCYTHE_OF_VITUR_BL,
+      ItemID.DEADMAN_BLIGHTED_SCYTHE_OF_VITUR, ItemID.DEADMAN_BLIGHTED_SCYTHE_OF_VITUR_UNCHARGED,
+      ItemID.DINHS_BULWARK
 	));
 
-	private static final int BARRAGE_ANIMATION = 10092;
-	private static final int DRAGON_FIRE_SHIELD_ANIMATION = 6696;
+	private static final int BARRAGE_ANIMATION = AnimationID.ZAROS_VERTICAL_CASTING_WALKMERGE;
+	private static final int DRAGON_FIRE_SHIELD_ANIMATION = AnimationID.QIP_DRAGON_SLAYER_PLAYER_UNLEASHING_FIRE;
 	private static final int NYLOCAS_REGION_ID = 13122;
 
 	private final Hooks.RenderableDrawListener drawListener = this::shouldDraw;
@@ -249,39 +240,39 @@ public class NyloDeathIndicatorsPlugin extends Plugin
 		final NPC npc = event.getNpc();
 		final int index = npc.getIndex();
 		switch (npc.getId()) {
-			case NpcID.NYLOCAS_ISCHYROS_8342:
-			case NpcID.NYLOCAS_TOXOBOLOS_8343:
-			case NpcID.NYLOCAS_HAGIOS:
-			case NpcID.NYLOCAS_ISCHYROS_10791:
-			case NpcID.NYLOCAS_TOXOBOLOS_10792:
-			case NpcID.NYLOCAS_HAGIOS_10793:
+			case NpcID.TOB_NYLOCAS_INCOMING_MELEE:
+			case NpcID.TOB_NYLOCAS_INCOMING_RANGED:
+			case NpcID.TOB_NYLOCAS_INCOMING_MAGIC:
+			case NpcID.TOB_NYLOCAS_INCOMING_MELEE_HARD:
+			case NpcID.TOB_NYLOCAS_INCOMING_RANGED_HARD:
+			case NpcID.TOB_NYLOCAS_INCOMING_MAGIC_HARD:
 				this.nylos.add(new Nylocas(npc, index, smallHP));
 				break;
-			case NpcID.NYLOCAS_ISCHYROS_8345:
-			case NpcID.NYLOCAS_TOXOBOLOS_8346:
-			case NpcID.NYLOCAS_HAGIOS_8347:
-			case NpcID.NYLOCAS_ISCHYROS_8351:
-			case NpcID.NYLOCAS_TOXOBOLOS_8352:
-			case NpcID.NYLOCAS_HAGIOS_8353:
-			case NpcID.NYLOCAS_ISCHYROS_10783:
-			case NpcID.NYLOCAS_TOXOBOLOS_10784:
-			case NpcID.NYLOCAS_HAGIOS_10785:
-			case NpcID.NYLOCAS_ISCHYROS_10794:
-			case NpcID.NYLOCAS_TOXOBOLOS_10795:
-			case NpcID.NYLOCAS_HAGIOS_10796:
-			case NpcID.NYLOCAS_ISCHYROS_10800:
-			case NpcID.NYLOCAS_TOXOBOLOS_10801:
-			case NpcID.NYLOCAS_HAGIOS_10802:
+			case NpcID.TOB_NYLOCAS_BIG_INCOMING_MELEE:
+			case NpcID.TOB_NYLOCAS_BIG_INCOMING_RANGED:
+			case NpcID.TOB_NYLOCAS_BIG_INCOMING_MAGIC:
+			case NpcID.TOB_NYLOCAS_BIG_FIGHTING_MELEE:
+			case NpcID.TOB_NYLOCAS_BIG_FIGHTING_RANGED:
+			case NpcID.TOB_NYLOCAS_BIG_FIGHTING_MAGIC:
+			case NpcID.TOB_NYLOCAS_BIG_FIGHTING_MELEE_STORY:
+			case NpcID.TOB_NYLOCAS_BIG_FIGHTING_RANGED_STORY:
+			case NpcID.TOB_NYLOCAS_BIG_FIGHTING_MAGIC_STORY:
+			case NpcID.TOB_NYLOCAS_BIG_INCOMING_MELEE_HARD:
+			case NpcID.TOB_NYLOCAS_BIG_INCOMING_RANGED_HARD:
+			case NpcID.TOB_NYLOCAS_BIG_INCOMING_MAGIC_HARD:
+			case NpcID.TOB_NYLOCAS_BIG_FIGHTING_MELEE_HARD:
+			case NpcID.TOB_NYLOCAS_BIG_FIGHTING_RANGED_HARD:
+			case NpcID.TOB_NYLOCAS_BIG_FIGHTING_MAGIC_HARD:
 				this.nylos.add(new Nylocas(npc, index, bigHP));
 				break;
-			case NpcID.NYLOCAS_ISCHYROS_10774:
-			case NpcID.NYLOCAS_TOXOBOLOS_10775:
-			case NpcID.NYLOCAS_HAGIOS_10776:
+			case NpcID.TOB_NYLOCAS_INCOMING_MELEE_STORY:
+			case NpcID.TOB_NYLOCAS_INCOMING_RANGED_STORY:
+			case NpcID.TOB_NYLOCAS_INCOMING_MAGIC_STORY:
 				this.nylos.add(new Nylocas(npc, index, smSmallHP));
 				break;
-			case NpcID.NYLOCAS_ISCHYROS_10777:
-			case NpcID.NYLOCAS_TOXOBOLOS_10778:
-			case NpcID.NYLOCAS_HAGIOS_10779:
+			case NpcID.TOB_NYLOCAS_BIG_INCOMING_MELEE_STORY:
+			case NpcID.TOB_NYLOCAS_BIG_INCOMING_RANGED_STORY:
+			case NpcID.TOB_NYLOCAS_BIG_INCOMING_MAGIC_STORY:
 				this.nylos.add(new Nylocas(npc, index, smBigHP));
 		}
 	}
@@ -426,7 +417,7 @@ public class NyloDeathIndicatorsPlugin extends Plugin
 		}
 
 		int weaponUsed = playerComposition.getEquipmentId(KitType.WEAPON);
-		int attackStyle = client.getVarpValue(VarPlayer.ATTACK_STYLE);
+		int attackStyle = client.getVarpValue(VarPlayerID.COM_MODE);
 
 		boolean isBarrageCast = player.getAnimation() == BARRAGE_ANIMATION;
 		boolean isDragonFireShield = player.getAnimation() == DRAGON_FIRE_SHIELD_ANIMATION;
@@ -437,7 +428,7 @@ public class NyloDeathIndicatorsPlugin extends Plugin
 		boolean isDefensiveCast = false;
 		if (isBarrageCast && !isPoweredStaff)
 		{
-			isDefensiveCast = client.getVarbitValue(Varbits.DEFENSIVE_CASTING_MODE) == 1;
+			isDefensiveCast = client.getVarbitValue(VarbitID.AUTOCAST_DEFMODE) == 1;
 		}
 		else if (isPoweredStaff)
 		{
@@ -608,7 +599,17 @@ public class NyloDeathIndicatorsPlugin extends Plugin
 
 	private boolean isInNylocasRegion()
 	{
-		return client.getMapRegions() != null && ArrayUtils.contains(client.getMapRegions(), NYLOCAS_REGION_ID);
+    WorldView wv = client.getTopLevelWorldView();
+    if (wv == null) {
+      return false;
+    }
+
+    int[] regions = wv.getMapRegions();
+    if (regions == null || regions.length == 0) {
+      return false;
+    }
+
+		return ArrayUtils.contains(regions, NYLOCAS_REGION_ID);
 	}
 
 	@VisibleForTesting
@@ -623,12 +624,12 @@ public class NyloDeathIndicatorsPlugin extends Plugin
 		{
 			switch (((GraphicsObject) renderable).getId())
 			{
-				case GraphicID.MELEE_NYLO_DEATH:
-				case GraphicID.RANGE_NYLO_DEATH:
-				case GraphicID.MAGE_NYLO_DEATH:
-				case GraphicID.MELEE_NYLO_EXPLOSION:
-				case GraphicID.RANGE_NYLO_EXPLOSION:
-				case GraphicID.MAGE_NYLO_EXPLOSION:
+				case SpotanimID.TOB_NYLOCAS_DEATH_MELEE_STANDARD:
+				case SpotanimID.TOB_NYLOCAS_DEATH_RANGED_STANDARD:
+				case SpotanimID.TOB_NYLOCAS_DEATH_MAGIC_STANDARD:
+				case SpotanimID.TOB_NYLOCAS_DEATH_MELEE_DETONATE:
+				case SpotanimID.TOB_NYLOCAS_DEATH_RANGED_DETONATE:
+				case SpotanimID.TOB_NYLOCAS_DEATH_MAGIC_DETONATE:
 					return false;
 			}
 		}
