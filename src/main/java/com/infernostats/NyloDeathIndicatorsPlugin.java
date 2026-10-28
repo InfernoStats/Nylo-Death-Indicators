@@ -51,8 +51,9 @@ public class NyloDeathIndicatorsPlugin extends Plugin {
       ItemID.WARPED_SCEPTRE,
       ItemID.TUMEKENS_SHADOW,
       ItemID.DEADMAN_BLIGHTED_TUMEKENS_SHADOW,
-      ItemID.EYE_OF_AYAK));
-
+      ItemID.EYE_OF_AYAK,
+      ItemID.ZORYAS_TOME));
+    
   private static final Set<Integer> NYLO_MELEE_WEAPONS = new HashSet<>(Arrays.asList(
       ItemID.SWIFT_BLADE, ItemID.JOINT_OF_HAM, ItemID.GOBLIN_RPG,
       ItemID.DRAGON_CLAWS, ItemID.DRAGON_SCIMITAR,
